@@ -1,0 +1,82 @@
+{
+  "name": "anime-4k-hdr",
+  "description": "Reference pipeline: restore -> 2x -> 2x -> sharpen -> 4K -> semantic HDR -> JPEG XR. Every line is independently insertable/removable.",
+  "defaults": {
+    "out_dir": "out",
+    "work_dir": "work"
+  },
+  "stages": [
+    {
+      "stage": "io.load",
+      "note": "path comes from `imgen run -i FILE` unless params.path is set"
+    },
+    {
+      "stage": "denoise.ffmpeg",
+      "params": { "preset": "hqdn3d-light" },
+      "enabled": false,
+      "note": "needs ffmpeg; without it use denoise.nlmeans or denoise.bilateral (pure numpy)"
+    },
+    {
+      "stage": "deband.gradient",
+      "params": { "threshold": 0.02, "span": 16, "iterations": 2, "strength": 0.6, "dither": 0.4 },
+      "note": "kill banding BEFORE upscaling, while it is still cheap to fix"
+    },
+    {
+      "stage": "upscale.ncnn",
+      "label": "2x-pass-1",
+      "params": { "tool": "realesrgan", "model": "realesr-animevideov3", "scale": 2, "tile": 0 }
+    },
+    {
+      "stage": "upscale.ncnn",
+      "label": "2x-pass-2",
+      "params": { "tool": "realesrgan", "model": "realesr-animevideov3", "scale": 2, "tile": 0 },
+      "note": "two 2x passes instead of one 4x: the second pass sees the first pass's output"
+    },
+    {
+      "stage": "sharpen.unsharp",
+      "params": { "radius": 1.0, "amount": 0.3, "threshold": 0.0 }
+    },
+    {
+      "stage": "io.resize",
+      "params": { "long_edge": 3840, "interp": "area" },
+      "note": "cap at 4K: the Windows HDR wallpaper path and the WIC encoder are 4K-friendly"
+    },
+    {
+      "stage": "hdr.semantic.external",
+      "params": {
+        "long_edge": 1024,
+        "align": 16,
+        "steps": 25,
+        "guidance": 3.0,
+        "seed": 42,
+        "prompt": "Convert this image to HDR"
+      },
+      "note": "LumiPic / FLUX-class LoRA; result cached as .npy so hdr.map can be re-tuned for free"
+    },
+    {
+      "stage": "hdr.map",
+      "params": {
+        "knee": 2.6,
+        "rolloff": 3.2,
+        "paper_white_nits": 200.0,
+        "peak_nits": 1000.0,
+        "shoulder_width": 400.0,
+        "gate": "flatgate",
+        "flat_y_lo": 0.45,
+        "flat_y_hi": 0.65,
+        "allow_glow": 0.1
+      },
+      "note": "measured on this project's input: 874 -> 647 nit peak and >500nit 0.036% -> 0.002%; see docs/HDR-NOTES.md"
+    },
+    {
+      "stage": "hdr.preview"
+    },
+    {
+      "stage": "encode.jxr",
+      "params": { "quality": 1.0, "verify": true }
+    },
+    {
+      "stage": "analyze.stats"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "quick-2x",
+  "description": "Smoke test / fast path: one 2x ncnn pass, optional sharpen, PNG out. Runs in seconds and needs nothing but the ncnn binary.",
+  "defaults": {
+    "out_dir": "out",
+    "work_dir": "work"
+  },
+  "stages": [
+    { "stage": "io.load" },
+    {
+      "stage": "upscale.ncnn",
+      "params": { "tool": "realesrgan", "model": "realesr-animevideov3", "scale": 2, "tile": 0 }
+    },
+    { "stage": "sharpen.unsharp", "params": { "radius": 1.0, "amount": 0.25 }, "enabled": false },
+    { "stage": "io.save", "params": { "filename": "{stem}-2x.png" } },
+    { "stage": "analyze.stats" }
+  ]
+}

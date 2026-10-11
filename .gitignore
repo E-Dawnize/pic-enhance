@@ -1,0 +1,25 @@
+# --- runtime scratch -------------------------------------------------------
+out/
+work/
+_scratch/
+test/
+*.f32
+*.npy
+*.stats.json
+
+# --- local configuration and secrets ---------------------------------------
+config/tools.json
+.gh-token.txt
+*.token
+
+# --- fetched binaries and models (see scripts/fetch_models.py) --------------
+tools/
+models/
+!tools/README.md
+
+# --- python ----------------------------------------------------------------
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/

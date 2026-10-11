@@ -1,0 +1,31 @@
+{
+  "name": "hdr-retune",
+  "description": "Re-tune an HDR grade from a CACHED semantic map: no model, no GPU, seconds per variant. This is the loop that makes parameter search affordable.",
+  "defaults": {
+    "out_dir": "out",
+    "work_dir": "work"
+  },
+  "stages": [
+    { "stage": "io.load" },
+    {
+      "stage": "hdr.semantic.load",
+      "params": { "path": "", "gain": 1.0 },
+      "note": "set with --set hdr.semantic.load.path=<cache>.npy (or copy the path here)"
+    },
+    {
+      "stage": "hdr.map",
+      "params": {
+        "knee": 2.6,
+        "rolloff": 3.2,
+        "paper_white_nits": 200.0,
+        "peak_nits": 1000.0,
+        "shoulder_width": 400.0,
+        "gate": "flatgate",
+        "allow_glow": 0.0
+      }
+    },
+    { "stage": "hdr.preview" },
+    { "stage": "encode.jxr", "params": { "quality": 1.0, "verify": true } },
+    { "stage": "analyze.stats" }
+  ]
+}

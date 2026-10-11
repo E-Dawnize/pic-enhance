@@ -1,0 +1,12 @@
+# Keep the repository line-ending neutral: source and docs are LF everywhere,
+# binary deliverables are never touched.
+* text=auto eol=lf
+*.jxr binary
+*.jpg binary
+*.png binary
+*.exr binary
+*.hdr binary
+*.f32 binary
+*.npy binary
+*.onnx binary
+*.zip binary

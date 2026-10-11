@@ -1,0 +1,14 @@
+{
+  "_comment": "Copy to config/tools.json and edit. Every path is optional: anything omitted is auto-discovered (see imgen/config.py). Environment variables IMGEN_REALESRGAN, IMGEN_REALCUGAN, IMGEN_WAIFU2X, IMGEN_FFMPEG, IMGEN_JXR_ENCODE, IMGEN_JXR_INSPECT, IMGEN_JXR_VERIFY, IMGEN_TOOLS_ROOT, IMGEN_MODELS_DIR override this file.",
+  "tools": {
+    "realesrgan": "tools/realesrgan-ncnn-vulkan.exe",
+    "realcugan": "tools/realcugan-ncnn-vulkan.exe",
+    "waifu2x": "tools/waifu2x-ncnn-vulkan.exe",
+    "ffmpeg": "tools/ffmpeg.exe",
+    "jxr_encode": "tools/jxr-encode-wic.exe",
+    "jxr_inspect": "tools/jxr-inspect.exe",
+    "jxr_verify": "tools/verify-jxr.exe",
+    "models_dir": "tools/models",
+    "python": ""
+  }
+}

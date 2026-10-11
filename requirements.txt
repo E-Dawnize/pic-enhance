@@ -1,0 +1,11 @@
+# Core pipeline: numpy + Pillow only.
+numpy>=1.24
+Pillow>=10.0
+
+# Optional: ONNX model upscaling (upscale.onnx). Use onnxruntime-gpu for CUDA/DML.
+# onnxruntime>=1.16
+
+# Optional: the semantic HDR stage (hdr.semantic.external) runs in a *separate*
+# interpreter; install these there, not here:
+#   pip install "git+https://github.com/huggingface/diffusers.git"
+#   pip install torch peft transformers accelerate safetensors

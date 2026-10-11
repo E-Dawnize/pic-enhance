@@ -1,0 +1,62 @@
+{
+  "items": [
+    {
+      "file": "hdr/root-photo-4K-HDR-flatgate-balanced.jxr",
+      "caption": "人像照片 4K HDR 壁纸（推荐档）",
+      "provenance": "Real-ESRGAN x4plus-anime 4x -> Lanczos 4K -> LumiPic 语义高光 -> flatgate 亮度映射 -> WIC JXR",
+      "source": "final/root-photo/root-photo-4K-HDR-flatgate-balanced-460nit.jxr",
+      "size": "3840x2628",
+      "bytes": 6387956,
+      "sha256": "439785bdfc47e766df611767728bf855c8fcb3b9b682dd9fda83b1dfe8c87bc9",
+      "format": "JPEG XR, 64bppRGBAHalf, scRGB (1.0 = 80 nit)"
+    },
+    {
+      "file": "preview/root-photo-HDR-preview.jpg",
+      "caption": "上图的 SDR 检视预览（Reinhard，200 nit 纸白）",
+      "provenance": "同一条管线的 hdr.preview 阶段输出，转 JPEG 以控制仓库体积",
+      "source": "final/root-photo/root-photo-4K-HDR-flatgate-balanced-460nit.preview.png",
+      "size": "1920x1314",
+      "bytes": 692077,
+      "sha256": "eef1b249439da2fd4f772f691f9a515bb004737bf88c04c50fa06cbab066836b"
+    },
+    {
+      "file": "hdr/anime6b-4x-deband16-HDR.jxr",
+      "caption": "动画壁纸 4K HDR（anime6b / deband16）",
+      "provenance": "Real-ESRGAN anime6b 4x -> deband -> LumiPic -> 亮度映射 -> JXR",
+      "source": "final/anime6b-4x-deband16-HDR.jxr",
+      "size": "3840x2160",
+      "bytes": 11834449,
+      "sha256": "2ea4a8156a22d64c11fa82ab82ec86a835c04196835bea0fd546a8fa20b54f6b",
+      "format": "JPEG XR, 64bppRGBAHalf, scRGB (1.0 = 80 nit)"
+    },
+    {
+      "file": "hdr/new_pic-HDR-wallpaper-auto-v8.jxr",
+      "caption": "插画壁纸 4K HDR（自动档 v8）",
+      "provenance": "同上；映射曲线为自动档",
+      "source": "final/new_pic-HDR壁纸-自动v8.jxr",
+      "size": "3840x2560",
+      "bytes": 7496497,
+      "sha256": "6ba2b16071fc247252b200fb0cdce2125da54d3e0fd1ce2edc1130a3a0fbd083",
+      "format": "JPEG XR, 64bppRGBAHalf, scRGB (1.0 = 80 nit)"
+    },
+    {
+      "file": "preview/anime6b-HDR-preview.jpg",
+      "caption": "动画 HDR 壁纸的 SDR 检视预览",
+      "provenance": "hdr.preview 输出，转 JPEG",
+      "source": "final/anime6b-4x-deband16_hdr/anime6b-4x-deband16_preview.png",
+      "size": "1920x1080",
+      "bytes": 197312,
+      "sha256": "20f8b36d3320f9a2d85b95449115642d206f4a468f0d29f89008b6645e64d853"
+    },
+    {
+      "file": "compare/highlight-fix-1000nit-vs-flatgate.png",
+      "caption": "高光过曝修复对比：1000nit 原版 / flatgate-safe / flatgate-balanced",
+      "provenance": "横向拼图，1:1 像素预览",
+      "source": "final/root-photo/对比_高光修复_1000nit_vs_flatgate-safe_vs_balanced.png",
+      "size": "3300x1314",
+      "bytes": 1380549,
+      "sha256": "01f9989392d46a7727009da05708f0bccbdc73f8066663ccd579a88830daa842"
+    }
+  ],
+  "missing": []
+}

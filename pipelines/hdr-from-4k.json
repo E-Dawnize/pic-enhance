@@ -1,0 +1,44 @@
+{
+  "name": "hdr-from-4k",
+  "description": "An SDR image that is already 4K -> HDR wallpaper: semantic model -> luminance mapping -> JXR.",
+  "defaults": {
+    "out_dir": "out",
+    "work_dir": "work"
+  },
+  "stages": [
+    { "stage": "io.load" },
+    {
+      "stage": "io.resize",
+      "params": { "long_edge": 3840, "interp": "area" },
+      "enabled": false,
+      "note": "enable when the source is larger than 4K"
+    },
+    {
+      "stage": "hdr.semantic.external",
+      "params": { "long_edge": 1024, "align": 16, "steps": 25, "guidance": 3.0, "seed": 42 }
+    },
+    {
+      "stage": "hdr.map",
+      "params": {
+        "knee": 2.6,
+        "rolloff": 3.2,
+        "paper_white_nits": 200.0,
+        "peak_nits": 1000.0,
+        "shoulder_width": 400.0,
+        "gate": "flatgate",
+        "flat_y_lo": 0.45,
+        "flat_y_hi": 0.65,
+        "allow_glow": 0.1
+      },
+      "note": "wider flat ramp than the original script: suppresses decorative bright details too (see docs/HDR-NOTES.md §4)"
+    },
+    { "stage": "hdr.preview" },
+    { "stage": "encode.jxr", "params": { "quality": 1.0, "verify": true } },
+    { "stage": "encode.float", "params": { "filename": "{stem}.scrgb.f32" }, "enabled": false },
+    { "stage": "analyze.stats" },
+    {
+      "stage": "analyze.crops",
+      "params": { "anchors": "center,right,background", "size": 640 }
+    }
+  ]
+}

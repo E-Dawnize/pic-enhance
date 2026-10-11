@@ -1,0 +1,37 @@
+{
+  "name": "anime-4k-sr",
+  "description": "Super-resolution only (no HDR): restore -> 2x -> 2x -> sharpen -> 4K PNG. Use this when you only need a bigger, cleaner image.",
+  "defaults": {
+    "out_dir": "out",
+    "work_dir": "work"
+  },
+  "stages": [
+    { "stage": "io.load" },
+    {
+      "stage": "denoise.bilateral",
+      "params": { "radius": 2, "sigma_color": 0.05, "sigma_space": 1.5 },
+      "enabled": false
+    },
+    {
+      "stage": "deband.gradient",
+      "params": { "threshold": 0.02, "dither": 0.4 },
+      "enabled": false
+    },
+    {
+      "stage": "upscale.ncnn",
+      "label": "2x-pass-1",
+      "params": { "tool": "realesrgan", "model": "realesr-animevideov3", "scale": 2, "tile": 0 }
+    },
+    {
+      "stage": "upscale.ncnn",
+      "label": "2x-pass-2",
+      "params": { "tool": "realesrgan", "model": "realesr-animevideov3", "scale": 2, "tile": 0 }
+    },
+    {
+      "stage": "sharpen.unsharp",
+      "params": { "radius": 1.0, "amount": 0.3 }
+    },
+    { "stage": "io.save", "params": { "filename": "{stem}-4x.png", "format": "png" } },
+    { "stage": "analyze.stats" }
+  ]
+}

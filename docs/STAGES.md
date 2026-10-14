@@ -465,12 +465,12 @@ Tiled ONNX super-resolution with feathered (seam-free) blending.
 
 | tool | path |
 |---|---|
-| realesrgan | `D:\Documents\pic-enhance\tools\realesrgan-ncnn-vulkan.exe` |
-| realcugan | `D:\Documents\pic-enhance\tools\realcugan-ncnn-vulkan-20220728-windows\realcugan-ncnn-vulkan.exe` |
-| waifu2x | `D:\Documents\pic-enhance\tools\waifu2x-ncnn-vulkan-20250915-windows\waifu2x-ncnn-vulkan-20250915-windows\waifu2x-ncnn-vulkan.exe` |
+| realesrgan | `D:\Documents\pic-enhance\anime-hdr-upscale\tools\realesrgan-ncnn-vulkan.exe` |
+| realcugan | `D:\Documents\pic-enhance\anime-hdr-upscale\tools\realcugan-ncnn-vulkan-20220728-windows\realcugan-ncnn-vulkan.exe` |
+| waifu2x | `D:\Documents\pic-enhance\anime-hdr-upscale\tools\waifu2x-ncnn-vulkan-20250915-windows\waifu2x-ncnn-vulkan.exe` |
 | ffmpeg | `— not found —` |
-| jxr-encode-wic | `C:\Users\13746\Documents\HDR-JXR-工作流与技术文档\tools\jxr-encode-wic.exe` |
-| jxr-inspect | `C:\Users\13746\Documents\HDR-JXR-工作流与技术文档\tools\jxr-inspect.exe` |
-| verify-jxr | `C:\Users\13746\Documents\HDR-JXR-工作流与技术文档\tools\verify-jxr.exe` |
-| models dir | `D:\Documents\pic-enhance\tools\models` |
-| python (semantic stage) | `C:\Users\13746\AppData\Local\Programs\Python\Python310\python.exe` |
+| jxr-encode-wic | `D:\Documents\pic-enhance\anime-hdr-upscale\tools\jxr-encode-wic.exe` |
+| jxr-inspect | `D:\Documents\pic-enhance\anime-hdr-upscale\tools\jxr-inspect.exe` |
+| verify-jxr | `D:\Documents\pic-enhance\anime-hdr-upscale\tools\verify-jxr.exe` |
+| models dir | `D:\Documents\pic-enhance\anime-hdr-upscale\tools\models` |
+| python (semantic stage) | `D:\Documents\pic-enhance\anime-hdr-upscale\.venv\Scripts\python.exe` |

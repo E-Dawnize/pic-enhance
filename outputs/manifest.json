@@ -56,6 +56,43 @@
       "size": "3300x1314",
       "bytes": 1380549,
       "sha256": "01f9989392d46a7727009da05708f0bccbdc73f8066663ccd579a88830daa842"
+    },
+    {
+      "file": "source/eye-closeup-4k.png",
+      "caption": "源图：动漫眼部特写 3840x2160（容器是 2x 上采样，实测真实解析力 1920x1080）",
+      "provenance": "用户提供；LANCZOS 1/2 往返 PSNR 52.9 dB、中值高通噪声 sigma 1.4/255、无 8/16 像素块效应",
+      "source": "work/source/eye-closeup-4k.png",
+      "size": "3840x2160",
+      "bytes": 5100987,
+      "sha256": "3a51e417a99fdf0306ed4ca297bcd928f8a17dca4e7de6e8a9d5c3b9e9d56053"
+    },
+    {
+      "file": "hdr/eye-closeup-4K-HDR-rebuild.jxr",
+      "caption": "眼部特写 4K HDR 壁纸（1080p 真实解析力重建 + 语义 HDR）",
+      "provenance": "pipelines/rebuild-4k-hdr.json：2x 均值降到 1080p -> Real-CUGAN models-pro 2x -> deband -> LumiPic 语义高光 -> flatgate knee 0.5 / rolloff 1.5 / 纸白 200 nit / 峰值上限 1000 nit -> WIC JXR；实测峰值 871 nit，受影响 3.19%，>500 nit 0.0005%",
+      "source": "out/eye-closeup-4k.jxr",
+      "size": "3840x2160",
+      "bytes": 5475814,
+      "sha256": "bd7d7c37f4760b2695e2a3f5e2ebc6943ab97fb18d67ae7f015beefe5e61521e",
+      "format": "JPEG XR, 64bppRGBAHalf, scRGB (1.0 = 80 nit)"
+    },
+    {
+      "file": "preview/eye-closeup-HDR-preview.jpg",
+      "caption": "上图的 SDR 检视预览（Reinhard，200 nit 纸白）",
+      "provenance": "hdr.preview 阶段输出，转 JPEG 以控制仓库体积",
+      "source": "out/eye-closeup-4k.preview.png",
+      "size": "3840x2160",
+      "bytes": 304362,
+      "sha256": "819bf8de546d509aa20ed7c56dc4701bfeaacd4b93cd503e3fb3aaf8276964f5"
+    },
+    {
+      "file": "compare/eye-closeup-sr-rebuild-1to1.png",
+      "caption": "超分对照：原图 4K vs 重建 4K（1:1 像素）",
+      "provenance": "左：源文件；右：2x 均值降采样 + Real-CUGAN models-pro 2x",
+      "source": "out/eye-closeup-4k.sr-compare.png",
+      "size": "1760x590",
+      "bytes": 868929,
+      "sha256": "537c0e2cdb981546c40207045f1c2f529c0cb3b123f2c39ee394c772803e22a5"
     }
   ],
   "missing": []

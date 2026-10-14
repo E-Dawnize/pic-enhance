@@ -1,0 +1,76 @@
+{
+  "name": "rebuild-4k-hdr",
+  "description": "A 4K file whose real detail is only 1080p (a 2x up-scaling container): drop to the native grid, rebuild 2x with Real-CUGAN, then semantic HDR -> scRGB -> JPEG XR. Measured on the source this pipeline was written for: 3840x2160 anime still, LANCZOS 1/2 round-trip PSNR 52.9 dB (i.e. the 4K pixels carry 1080p of information), median high-pass noise sigma 1.4/255, no 8/16-pixel blockiness.",
+  "defaults": {
+    "out_dir": "out",
+    "work_dir": "work"
+  },
+  "stages": [
+    {
+      "stage": "io.load",
+      "note": "path comes from `imgen run -i FILE` unless params.path is set"
+    },
+    {
+      "stage": "io.resize",
+      "params": { "scale": 0.5, "interp": "area" },
+      "note": "exact 2x area average: undoes the container's own interpolation so the SR model sees native pixels instead of a resampled blur"
+    },
+    {
+      "stage": "deband.gradient",
+      "params": { "threshold": 0.02, "span": 16, "iterations": 2, "strength": 0.6, "dither": 0.4 },
+      "note": "cheap here (1080p) and before the SR pass, so the model cannot amplify contour steps; measured: smooth-area mean|dx| 0.445 -> 0.375 with lap_abs 4.24 -> 4.21 (no detail loss)"
+    },
+    {
+      "stage": "upscale.ncnn",
+      "label": "rebuild-2x",
+      "params": {
+        "tool": "realcugan",
+        "model": "models-pro",
+        "scale": 2,
+        "noise": 0,
+        "tile": 0
+      },
+      "note": "models-pro/up2x-no-denoise: source measured clean, so denoise would only soften; model resolution-denoise happens inside the network"
+    },
+    {
+      "stage": "sharpen.unsharp",
+      "params": { "radius": 1.0, "amount": 0.3, "threshold": 0.0 },
+      "enabled": false,
+      "note": "OFF by default: Real-CUGAN already restores line energy (lap_std 15.3 vs 2.6 for the soft 4K input), and unsharp pushes it to 19.0 with visible overshoot — enable only for a deliberately crisp look"
+    },
+    {
+      "stage": "hdr.semantic.external",
+      "params": {
+        "long_edge": 1024,
+        "align": 16,
+        "steps": 25,
+        "guidance": 3.0,
+        "seed": 42,
+        "prompt": "Convert this image to HDR"
+      },
+      "note": "LumiPic (FLUX.2-klein-base-4B + LoRA). Model/LoRA/interpreter are auto-discovered under tools/LumiPic and .venv; the result is cached as .npy so hdr.map can be re-tuned for free"
+    },
+    {
+      "stage": "hdr.map",
+      "params": {
+        "knee": 0.5,
+        "rolloff": 1.5,
+        "paper_white_nits": 200.0,
+        "peak_nits": 1000.0,
+        "shoulder_width": 400.0,
+        "gate": "flatgate",
+        "flat_y_lo": 0.45,
+        "flat_y_hi": 0.65,
+        "allow_glow": 0.1
+      },
+      "note": "knee/rolloff are measured, not default: LumiPic's scene-linear field for this dark frame is p50 0.08 / p99.7 0.67 / p99.99 50, so the 2.6 knee the bright-wallpaper pipelines use would leave 0.0008% of pixels lit. At 0.5/1.5 the specular sparkles and the light shafts reach 190-290 nit with an 871 nit peak, 3.2% of pixels affected. Re-tuning needs no GPU (semantic cache)"
+    },
+    { "stage": "hdr.preview" },
+    { "stage": "encode.jxr", "params": { "quality": 1.0, "verify": true } },
+    { "stage": "analyze.stats" },
+    {
+      "stage": "analyze.crops",
+      "params": { "anchors": "center,right,background", "size": 640 }
+    }
+  ]
+}

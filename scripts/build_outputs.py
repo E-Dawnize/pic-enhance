@@ -68,6 +68,35 @@ ITEMS: list[tuple[str, str, str, str, str]] = [
         "横向拼图，1:1 像素预览",
         "3300x1314",
     ),
+    # -- produced by this repository's own pipelines (paths are relative to ROOT) --
+    (
+        "work/source/eye-closeup-4k.png",
+        "source/eye-closeup-4k.png",
+        "源图：动漫眼部特写 3840x2160（容器是 2x 上采样，实测真实解析力 1920x1080）",
+        "用户提供；LANCZOS 1/2 往返 PSNR 52.9 dB、中值高通噪声 sigma 1.4/255、无 8/16 像素块效应",
+        "3840x2160",
+    ),
+    (
+        "out/eye-closeup-4k.jxr",
+        "hdr/eye-closeup-4K-HDR-rebuild.jxr",
+        "眼部特写 4K HDR 壁纸（1080p 真实解析力重建 + 语义 HDR）",
+        "pipelines/rebuild-4k-hdr.json：2x 均值降到 1080p -> Real-CUGAN models-pro 2x -> deband -> LumiPic 语义高光 -> flatgate knee 0.5 / rolloff 1.5 / 纸白 200 nit / 峰值上限 1000 nit -> WIC JXR；实测峰值 871 nit，受影响 3.19%，>500 nit 0.0005%",
+        "3840x2160",
+    ),
+    (
+        "out/eye-closeup-4k.preview.png",
+        "preview/eye-closeup-HDR-preview.jpg",
+        "上图的 SDR 检视预览（Reinhard，200 nit 纸白）",
+        "hdr.preview 阶段输出，转 JPEG 以控制仓库体积",
+        "3840x2160",
+    ),
+    (
+        "out/eye-closeup-4k.sr-compare.png",
+        "compare/eye-closeup-sr-rebuild-1to1.png",
+        "超分对照：原图 4K vs 重建 4K（1:1 像素）",
+        "左：源文件；右：2x 均值降采样 + Real-CUGAN models-pro 2x",
+        "1760x590",
+    ),
 ]
 
 MAX_PREVIEW_WIDTH = 1920
@@ -105,6 +134,10 @@ def main(argv: list[str] | None = None) -> int:
 
     for relative, destination, caption, provenance, size in ITEMS:
         source = source_root / relative
+        if not source.is_file():
+            # deliverables produced by this repository's own pipelines live under
+            # ROOT (out/, work/), not under --source
+            source = ROOT / relative
         if not source.is_file():
             missing.append(relative)
             continue

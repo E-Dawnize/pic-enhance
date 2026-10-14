@@ -1,0 +1,71 @@
+{
+  "name": "upscale-4k-hdr-png",
+  "description": "Below-4K illustration -> 4K: one Real-CUGAN pass (2x or 4x, --set per source), capped at 3840 on the long edge with the aspect ratio preserved, written out twice: a 4K SDR PNG and, after the semantic HDR chain, a scRGB JPEG XR.",
+  "defaults": {
+    "out_dir": "out",
+    "work_dir": "work"
+  },
+  "stages": [
+    {
+      "stage": "io.load",
+      "note": "path comes from `imgen run -i FILE` unless params.path is set"
+    },
+    {
+      "stage": "deband.gradient",
+      "params": { "threshold": 0.02, "span": 16, "iterations": 2, "strength": 0.6, "dither": 0.4 },
+      "note": "on the source, before the SR pass: JPEG-sourced gradients are the ones the model would otherwise bake in"
+    },
+    {
+      "stage": "upscale.ncnn",
+      "label": "sr",
+      "params": {
+        "tool": "realcugan",
+        "model": "models-pro",
+        "scale": 2,
+        "noise": 0,
+        "tile": 0
+      },
+      "note": "pick the scale so the result clears the 3840 target and then gets reduced: 2x when 2x(long edge) >= 3840, else 4x (models-se, which is where up4x-no-denoise lives)"
+    },
+    {
+      "stage": "io.resize",
+      "params": { "long_edge": 3840, "interp": "area" },
+      "note": "cap at 4K; portraits stay portraits, only the long edge is fixed"
+    },
+    {
+      "stage": "io.save",
+      "params": { "filename": "{stem}-4K.png", "format": "png" },
+      "note": "the SDR deliverable: the restored 4K image with no HDR grade applied"
+    },
+    {
+      "stage": "hdr.semantic.external",
+      "params": {
+        "long_edge": 1024,
+        "align": 16,
+        "steps": 25,
+        "guidance": 3.0,
+        "seed": 42,
+        "prompt": "Convert this image to HDR"
+      },
+      "note": "LumiPic; cached as .npy, so the hdr.map knee/rolloff below can be re-tuned without the GPU"
+    },
+    {
+      "stage": "hdr.map",
+      "params": {
+        "knee": 0.6,
+        "rolloff": 1.8,
+        "paper_white_nits": 200.0,
+        "peak_nits": 1000.0,
+        "shoulder_width": 400.0,
+        "gate": "flatgate",
+        "flat_y_lo": 0.45,
+        "flat_y_hi": 0.65,
+        "allow_glow": 0.1
+      },
+      "note": "knee/rolloff are provisional defaults: read the .npy distribution first (see docs/HDR-NOTES.md) — a knee copied from another image's grade is the easiest way to get a flat HDR"
+    },
+    { "stage": "hdr.preview" },
+    { "stage": "encode.jxr", "params": { "quality": 1.0, "verify": true } },
+    { "stage": "analyze.stats" }
+  ]
+}

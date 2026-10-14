@@ -39,6 +39,11 @@
       "note": "OFF by default: Real-CUGAN already restores line energy (lap_std 15.3 vs 2.6 for the soft 4K input), and unsharp pushes it to 19.0 with visible overshoot — enable only for a deliberately crisp look"
     },
     {
+      "stage": "io.save",
+      "params": { "filename": "{stem}-4K.png", "format": "png" },
+      "note": "the SDR deliverable: the rebuilt 4K image with no HDR grade applied"
+    },
+    {
       "stage": "hdr.semantic.external",
       "params": {
         "long_edge": 1024,

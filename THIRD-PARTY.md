@@ -1,8 +1,10 @@
 # 第三方组件与许可 / Third-party notices
 
-本仓库**只包含自己写的代码**。所有外部二进制、模型权重与图片素材都不随仓库分发，
-需要时由 `scripts/fetch_models.py` 或你手动放置。以下是本管线会调用到的东西，
-以及已知的许可要点。**再做分发（尤其是商用）前请自行复核最新条款。**
+本仓库**不包含第三方二进制和模型权重**：十几个 GB 的东西由 `scripts/fetch_models.py`
+按清单下载进 `tools/`（该目录不进版本库）。唯一的例外是三个WIC JXR 小工具
+（`jxr-encode-wic.exe` / `jxr-inspect.exe` / `verify-jxr.exe`，共约 380 KB）：
+它们没有上游发布页可拉，不随库里就不能完成最后一步编码，所以随仓库分发。
+以下是本管线会调用到的东西，以及已知的许可要点。**再做分发（尤其是商用）前请自行复核最新条款。**
 
 ## 1. 超分工具与模型
 
@@ -21,10 +23,10 @@ Waifu2x-Extension-GUI 为**个人使用免费**；Video2X 为 **AGPLv3**——�
 
 | 组件 | 用途 | 注意 |
 |---|---|---|
-| `jxr-encode-wic.exe` | scRGB 浮点 → JPEG XR（WIC） | 由使用者自行提供（本机放在 HDR-JXR 工具目录）。仓库不分发；请遵守其来源许可 |
+| `jxr-encode-wic.exe` | scRGB 浮点 → JPEG XR（WIC） | 随仓库分发（仓库内构建的小工具，无外部依赖）。商用前请自行确认你所在司法辖区的可分发性 |
 | `jxr-inspect.exe` / `verify-jxr.exe` | 校验 JXR 解码 | 同上 |
 | Windows Imaging Component (WIC) | JXR 编解码底座 | 操作系统组件 |
-| LumiPic / FLUX.2-klein-base-4B + LoRA | `hdr.semantic.external` | 基座模型与 LoRA 各有许可（HF 模型卡片）；**本仓库不分发权重**，仅提供调用脚本 |
+| LumiPic / FLUX.2-klein-base-4B + LoRA | `hdr.semantic.external` | 基座模型与 LoRA 各有许可（HF 模型卡片）；**本仓库不分发权重**，`scripts/fetch_models.py --lumipic` 会从 Hugging Face 拉取（约 15 GiB，支持镜像与断点续传） |
 
 ## 3. 可选依赖
 
@@ -38,7 +40,7 @@ Waifu2x-Extension-GUI 为**个人使用免费**；Video2X 为 **AGPLv3**——�
 
 ## 4. 图片素材
 
-`outputs/` 中的 HDR 壁纸与预览由本管线在**本地素材**上生成。
+`outputs/` 中的 HDR 壁纸、预览、对照图与 `outputs/source/` 里的源图都由本管线在**本地素材**上生成。
 素材版权归原作者或使用者所有；本仓库为**私有**仓库，请勿在未确认权利前再分发这些图片。
 
 ## 5. 专利提示

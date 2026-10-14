@@ -7,5 +7,6 @@ Pillow>=10.0
 
 # Optional: the semantic HDR stage (hdr.semantic.external) runs in a *separate*
 # interpreter; install these there, not here:
-#   pip install "git+https://github.com/huggingface/diffusers.git"
-#   pip install torch peft transformers accelerate safetensors
+#   python scripts/setup_env.py        # creates ./.venv (torch cu128 + diffusers + transformers)
+#   python scripts/fetch_models.py --lumipic   # FLUX.2-klein-base-4B + LumiPic LoRA -> tools/
+# With ./.venv present, `imgen doctor` and hdr.semantic.external pick it up automatically.

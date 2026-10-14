@@ -40,10 +40,35 @@ import numpy as np
 from .. import ops
 from ..backends import external
 from ..colors import LUMA, SCRGB_NITS, srgb_to_linear
+from ..config import REPO_ROOT
 from ..registry import StageError, stage
 from ..state import Frame
 
-__all__ = ["semantic_load", "semantic_identity", "semantic_external", "map_hdr", "preview"]
+__all__ = ["semantic_load", "semantic_identity", "semantic_external", "map_hdr", "preview", "resolve_semantic_paths"]
+
+#: Where the semantic model lives when the repository is self-contained
+#: (``scripts/fetch_models.py --lumipic`` downloads exactly here).
+SEMANTIC_ROOT = REPO_ROOT / "tools" / "LumiPic" / "models"
+BASE_MODEL_DIR = SEMANTIC_ROOT / "FLUX.2-klein-base-4B"
+LORA_CANDIDATES = (
+    SEMANTIC_ROOT / "LumiPic_lora" / "klein4b_alpha_step1750.safetensors",
+    SEMANTIC_ROOT / "LumiPic_lora" / "klein4b_alpha_step1000.safetensors",
+)
+
+
+def resolve_semantic_paths(model: str | None, lora: str | None) -> tuple[Path | None, Path | None]:
+    """Resolve the base model directory and LoRA file.
+
+    Explicit parameters win; otherwise the repository's own ``tools/LumiPic/models``
+    is used, which is what makes a fetched clone runnable without machine paths.
+    """
+    base = Path(model).expanduser() if model else None
+    if base is None and (BASE_MODEL_DIR / "model_index.json").is_file():
+        base = BASE_MODEL_DIR
+    weights = Path(lora).expanduser() if lora else None
+    if weights is None:
+        weights = next((p for p in LORA_CANDIDATES if p.is_file()), None)
+    return base, weights
 
 
 # --------------------------------------------------------------------------- #
@@ -139,12 +164,30 @@ def semantic_external(
 ) -> Frame:
     if frame.rgb is None:
         raise StageError("hdr.semantic.external needs an rgb plane")
-    from ..config import REPO_ROOT
 
     interpreter = Path(python) if python else ctx.tools.python
     script_path = Path(script) if script else REPO_ROOT / "scripts" / "lumipic_infer.py"
     if not script_path.is_file():
         raise StageError(f"inference script not found: {script_path}")
+
+    model_path, lora_path = resolve_semantic_paths(model, lora)
+    if model_path is None or lora_path is None:
+        missing = []
+        if model_path is None:
+            missing.append(f"base model ({BASE_MODEL_DIR})")
+        if lora_path is None:
+            missing.append(f"LoRA ({LORA_CANDIDATES[0]})")
+        raise StageError(
+            "hdr.semantic.external is missing "
+            + " and ".join(missing)
+            + "\n  fix: python scripts/fetch_models.py --lumipic   (or pass --set hdr.semantic.external.model=... )"
+        )
+    model, lora = str(model_path), str(lora_path)
+    if not Path(str(interpreter)).is_file():
+        raise StageError(
+            f"semantic interpreter not found: {interpreter}\n"
+            "  fix: python scripts/setup_env.py   (creates .venv next to the repository)"
+        )
 
     # The model sees a 1024-long-edge PNG; the .npy cache is keyed on that file
     # plus the sampling parameters, so re-tuning the mapping never re-runs it.

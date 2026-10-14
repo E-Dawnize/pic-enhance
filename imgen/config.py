@@ -28,6 +28,15 @@ __all__ = ["Tools", "load_tools", "REPO_ROOT", "CONFIG_PATH"]
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = REPO_ROOT / "config" / "tools.json"
 
+#: The repository's own virtual environment, when the semantic HDR stage lives in
+#: it. ``scripts/setup_env.py`` creates exactly this one, so a clone that has run
+#: the setup script needs no ``--python`` override.
+VENV_PYTHON = (
+    REPO_ROOT / ".venv" / "Scripts" / "python.exe"
+    if os.name == "nt"
+    else REPO_ROOT / ".venv" / "bin" / "python"
+)
+
 # Candidate relative paths per tool, tried against every discovery root.
 _CANDIDATES: dict[str, tuple[str, ...]] = {
     "realesrgan": (
@@ -43,6 +52,7 @@ _CANDIDATES: dict[str, tuple[str, ...]] = {
     "waifu2x": (
         "tools/waifu2x-ncnn-vulkan.exe",
         "waifu2x-ncnn-vulkan.exe",
+        "tools/waifu2x-ncnn-vulkan-20250915-windows/waifu2x-ncnn-vulkan.exe",
         "tools/waifu2x-ncnn-vulkan-20250915-windows/waifu2x-ncnn-vulkan-20250915-windows/waifu2x-ncnn-vulkan.exe",
     ),
     "jxr_encode": (
@@ -186,9 +196,18 @@ class Tools:
     def table(self) -> list[tuple[str, str, str]]:
         """``(capability, status, detail)`` rows for `imgen doctor`."""
         rows = []
-        for name in ("realesrgan", "realcugan", "waifu2x", "ffmpeg"):
+        for name in ("realesrgan", "realcugan", "waifu2x"):
             path = getattr(self, name, None)
             rows.append((name, "ok" if path else "missing", str(path or "-")))
+        # ffmpeg only backs the optional denoise.ffmpeg / deband.ffmpeg stages;
+        # every pipeline here has a pure-numpy alternative, so it is never required.
+        rows.append(
+            (
+                "ffmpeg",
+                "ok" if self.ffmpeg else "optional",
+                str(self.ffmpeg) if self.ffmpeg else "optional: denoise.ffmpeg / deband.ffmpeg only",
+            )
+        )
         jxr = [self.jxr_encode, self.jxr_inspect, self.jxr_verify]
         rows.append(
             (
@@ -244,6 +263,10 @@ def load_tools(config_path: str | Path | None = None, roots: list[str] | None = 
 
     if explicit.get("python"):
         tools.python = Path(str(explicit["python"])).expanduser()
+        sources["python"] = "config"
+    elif VENV_PYTHON.is_file():
+        tools.python = VENV_PYTHON
+        sources["python"] = "repo venv"
     tools.extra = {k: v for k, v in explicit.items() if k not in _ENV_VARS and k not in ("models_dir", "python")}
     tools.sources = sources
     return tools

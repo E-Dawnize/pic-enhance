@@ -24,7 +24,9 @@
 ## 2. 快速开始
 
 ```bash
-# 0) 需要 Python 3.10+，核心只依赖 numpy + Pillow
+# 0) 装依赖：外部工具 + 模型进 tools/，语义推理环境进 .venv/（都在仓库内）
+python scripts/fetch_models.py --all --yes   # ncnn 工具 / ONNX / ffmpeg / LumiPic（约 16 GiB）
+python scripts/setup_env.py                  # torch cu128 + diffusers + transformers
 python -m imgen doctor            # 这台机器能做什么、缺什么、怎么补
 python -m imgen stages            # 列出全部 23 个 stage
 python -m imgen pipelines         # 列出内置管线并校验
@@ -35,6 +37,9 @@ python -m imgen run pipelines/quick-2x.json -i input.jpg -o out
 # 2) 完整 4K HDR 壁纸（需要语义模型，见第 6 节）
 python -m imgen run pipelines/anime-4k-hdr.json -i source.png -o out
 
+# 2b) 4K 文件但真实解析力只有 1080p：降到原生网格后 2x 重建，再出 HDR
+python -m imgen run pipelines/rebuild-4k-hdr.json -i soft-4k.png -o out
+
 # 3) 已经 4K、只想调 HDR：复用语义缓存，几秒一轮
 python -m imgen run pipelines/hdr-retune.json -i source-4K.png \
     --set hdr.semantic.load.path=cache/lumipic.npy \
@@ -43,6 +48,11 @@ python -m imgen run pipelines/hdr-retune.json -i source-4K.png \
 
 `imgen doctor` 在本机的输出（示例）会告诉你：Python/依赖是否齐全、三个 ncnn 工具在哪、
 WIC JXR 编码器在哪、显卡是什么、models 目录在哪。
+
+**依赖不散落**：所有外部二进制、ncnn 权重、LumiPic 模型都落在仓库内的 `tools/`，
+语义推理用的解释器是仓库内的 `.venv/`。`imgen` 的自动发现就是从仓库根出发找 `tools/`，
+`.venv/Scripts/python.exe` 存在时会直接当语义解释器用，所以不需要任何机器路径或 `--set python=...`。
+仓库只提交代码、文档、小工具和成品；十几 GB 的权重由 `fetch_models.py` 按清单下载。
 
 ---
 
@@ -124,7 +134,9 @@ imgen run pipelines/anime-4k-hdr.json -i a.png --set hdr.map.peak_nits=900 --rep
 | `hdr/root-photo-4K-HDR-flatgate-balanced.jxr` | 人像照片 4K HDR 壁纸，3840×2628，可直接设为 Windows 壁纸 |
 | `hdr/anime6b-4x-deband16-HDR.jxr` | 动画壁纸 4K HDR |
 | `hdr/new_pic-HDR-wallpaper-auto-v8.jxr` | 插画壁纸 4K HDR |
+| `hdr/eye-closeup-4K-HDR-rebuild.jxr` | 眼部特写 4K HDR：源文件是 2x 容器（真实解析力 1080p），2x 重建后再做语义 HDR，峰值 871 nit / 受影响 3.19% |
 | `preview/*.jpg` | 对应的 SDR 检视预览（Reinhard 映射，非屏幕模拟） |
+| `compare/eye-closeup-sr-rebuild-1to1.png` | 超分前后 1:1 对照（原图 4K vs 重建 4K） |
 | `compare/highlight-fix-1000nit-vs-flatgate.png` | 高光过曝修复的横向对比 |
 
 `outputs/manifest.json` 记录每个文件的 SHA-256、尺寸、来源与生成流程；
@@ -137,19 +149,24 @@ imgen run pipelines/anime-4k-hdr.json -i a.png --set hdr.map.peak_nits=900 --rep
 
 ## 6. 语义 HDR 需要什么
 
-`hdr.semantic.external` 会把活交给**另一个解释器**（因为主流程不装 torch）：
+`hdr.semantic.external` 会把活交给**另一个解释器**（因为主流程不装 torch）。
+两个命令就能把它摆进仓库：
 
 ```bash
-# 在那个环境里
-pip install "git+https://github.com/huggingface/diffusers.git"
-pip install torch peft transformers accelerate safetensors
+python scripts/fetch_models.py --lumipic --yes   # -> tools/LumiPic/models/（约 15 GiB，可续传）
+python scripts/setup_env.py                      # -> .venv/（torch cu128 + diffusers + transformers）
+```
 
-# 然后告诉管线用哪个解释器（任选其一）
+之后**不需要任何 --set**：`imgen` 会先找仓库里的 `tools/LumiPic/models/FLUX.2-klein-base-4B`
+与 `LumiPic_lora/klein4b_alpha_step1750.safetensors`，解释器默认用仓库里的 `.venv`。
+要指到别处再显式覆盖（任选其一）：
+
+```bash
 imgen run pipelines/anime-4k-hdr.json -i a.png \
     --set hdr.semantic.external.python=D:/venvs/hdr/python.exe \
     --set hdr.semantic.external.model=D:/models/FLUX.2-klein-base-4B \
     --set hdr.semantic.external.lora=D:/models/klein4b_alpha_step1750.safetensors
-# 或写进 config/tools.json 的 "python" 字段
+# 或写进 config/tools.json
 ```
 
 模型输出（LogC3 编码）会被解到**场景线性**并存成 `.npy`；之后改任何映射参数都**不再需要 GPU**——
@@ -158,6 +175,11 @@ imgen run pipelines/anime-4k-hdr.json -i a.png \
 
 没有 GPU / 没有模型也能跑：把该阶段换成 `hdr.semantic.identity`，
 它会用解析式（源亮度 × 增益）当高光信号。**这是基线，不是好结果**——工具会在日志里明说。
+
+提醒一句：LumiPic 输出的是**场景线性**高光场，它的绝对值随题材变化很大。
+同一套 `knee` 用在白底高调图上和在夜景低调用上完全不是一回事：
+本仓库那张夜景实测 p50 只有 0.08、p99.99 是 50，用 2.6 的 knee 只有 0.0008% 的像素被点亮。
+换图先把 `.npy` 的分布打出来再定 knee，比拄参数快。
 
 ---
 
@@ -193,12 +215,18 @@ anime-hdr-upscale/
 │   ├── colors.py           # sRGB / LogC3 / scRGB / PQ / BT.2390
 │   ├── backends/           # ncnn、onnxruntime、WIC JXR、外部进程
 │   └── stages/             # 23 个阶段实现
-├── pipelines/              # 5 条可直接运行的管线
-├── outputs/                # 干净成品 + manifest.json
+├── pipelines/              # 6 条可直接运行的管线
+├── outputs/                # 干净成品 + manifest.json（含 source/ 源图与 1:1 对照）
 ├── docs/                   # 阶段参考、管线说明、HDR 笔记、调研报告
-├── scripts/                # 语义推理、模型下载、成品构建、文档生成
+├── scripts/                # 语义推理、模型/环境搭建、成品构建、文档生成
 ├── tests/                  # 数值单测（对照暴力实现）+ 诊断脚本
-└── config/tools.example.json
+├── config/tools.example.json
+├── tools/                  # 本地依赖（不进版本库，见 tools/README.md）
+│   ├── jxr-*.exe           #   唯一入库的小工具：WIC JXR 编码/校验
+│   ├── {realesrgan,realcugan,waifu2x}/  + models/
+│   └── LumiPic/models/     #   语义 HDR 权重（fetch_models.py --lumipic）
+├── .venv/                  # 语义推理解释器（setup_env.py 创建，不进版本库）
+└── _dl/                    # 下载缓存（大文件分片，不进版本库）
 ```
 
 ---
@@ -217,6 +245,11 @@ anime-hdr-upscale/
 
 工具路径的解析顺序：`--config` → 环境变量（`IMGEN_*`）→ `config/tools.json` → 自动发现
 （仓库 `tools/`、父目录 `../tools`、`~/Documents` 等）。运行时不会硬编码任何机器路径。
+
+语义 HDR 还有两个“跟仓库走”的默认值：模型/LoRA 先在 `tools/LumiPic/models/` 下找，
+解释器先用仓库内的 `.venv`（`imgen doctor` 会把两者都单独列出来）。
+`.venv` 不进版本库，因为 torch wheel 本身就是 2.7 GB；用 `scripts/setup_env.py` 重建即可，
+脚本里的 `torch==2.11.0+cu128` / `transformers==5.14.1` / `diffusers==0.40.0` 是本项目验证过的组合。
 
 ---
 
